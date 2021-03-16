@@ -22,11 +22,12 @@ def getApiInstance():
     api = tweepy.API(auth, wait_on_rate_limit = True)
     return api
 
+import numpy as np
 
 
 def search(search_query):
 
-    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(300)    
+    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(30)    
 
     #tweet=api.search(search_query,count=5000)
 
@@ -43,31 +44,37 @@ def search(search_query):
     return df,texts
 
 
-def run_bot(querys,tweets,n_try,min_retweet,pickup):
+def run_bot(dat):
     while True:
-        k=np.random.choice(len(querys),1)[0]
-        print(k)
-        dfb,texts=search(querys[k])                
-        retweetWithComment(querys[k],tweets[k],dfb,
-                           min_retweet=min_retweet[k],pickup=pickup[k],texts=texts,ntry=n_try[k])
+        key=np.random.choice(list(dat.keys()),1)[0]
+        tweets,texts=search(key)          
+        retweetWithComment(key,dat[key],tweets,
+                           texts=texts)
         
-        time.sleep(1200)
+        time.sleep(ST)
 
-def retweetWithComment(search_query,tweet,tweets,ntry=1,min_retweet=0,pickup=False,random=True,texts=[]):
+def retweetWithComment(search_query,d,tweets,texts=[]):
     cnt=0
+    print(d)
     for i in range(len(tweets)):
-        if random:
+        if "notrandom" in d:
+            print(notrand)
+            tw=df[i]            
+            k=i
+        else:            
             #tw=np.random.choice(tweets,1)[0]
             k=np.random.choice(range(len(tweets)),1)[0]
             tw=tweets[k]
-        else:
-            #print(notrand)
-            tw=df[i]
+            
         print("text",texts[k])
+        
+        #m.min_retweet
+        try:
+            if tw.retweet_count<=d["min_retweet"]:
+                continue
+        except:
+            pass
 
-        if tw.retweet_count<=min_retweet:
-            continue
-        #print(tw)
         u=tw.user
         print(u.screen_name)
         #print(u)
@@ -80,10 +87,10 @@ def retweetWithComment(search_query,tweet,tweets,ntry=1,min_retweet=0,pickup=Fal
         else:
             locstr=""
         
-        if pickup:            
-            ptweet=search_query+"を利用中の"+locstr+u.name+" @"+u.screen_name[:20]+"さん "+tweet
+        if "pickup" in d:     
+            ptweet=search_query+"を利用中の"+locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+d["tweet"]
         else:
-            ptweet=tweet
+            ptweet=d["tweet"]
         ptweet=ptweet[:140]
         print(ptweet)
         print("strlength",len(ptweet))
@@ -96,25 +103,36 @@ def retweetWithComment(search_query,tweet,tweets,ntry=1,min_retweet=0,pickup=Fal
         except:
             continue
         cnt+=1
-        if cnt>=ntry:
+        if "ntry" in d and cnt>=d["ntry"]:
             return True
-        
-        time.sleep(300)
+         
+        time.sleep(int(ST*0.1))
     
 
-ST=1000
+ST=600
 
     
 cm="それは税金の無駄ですね #A型事業所 #B型事業所 #就労移行支援 などの悪質事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。自宅で自習や内職をしましょう"
 settai="厚労省と福祉の業者団体でも絶対こういうのありますね、全国社会就労センター協議会,きょうされん,全国就労移行支援事業所連絡協議会全国就業センターとか　"+"https://fukusiprob.blogspot.com/2021/03/blog-post_8.html #接待 #福祉ビジネス"
 
-run_bot(["A型事業所","就労移行支援","接待"],
-       ["それは税金の無駄ですね掃除や家事の報告で１万円の報酬が出る #A型事業所 #B型事業所などの茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になりアホになります。自習や内職をしましょう",
-        "エクセルやUdemyでの自習で1.5万円/日の報酬が出る #就労移行支援 などの茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。ハロワの基金訓練などを探しましょう",
-        settai
-       ],
-       [1,1,2],
-       [0,0,20],
-       [1,1,0])
-
+dat={
+    "放課後デイサービス":{"tweet":"LINEで体温の報告を聞いりアンパンマンを見せるだけで1万数千円も出るヤツですね、税金の無駄です。利用を控えてください　#放課後デイサービス #福祉ビジネス ",
+                 "pickup":True},
     
+    "A型事業所":{
+        "tweet":"それは税金の無駄ですね掃除や家事の報告で１万円の報酬が出る #A型事業所 #B型事業所などの茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になりアホになります。自習や内職をしましょう",
+        "pickup":True        
+    },
+    "就労移行支援":{
+        "tweet":"エクセルやUdemyでの自習で1.5万円/日の報酬が出る #就労移行支援 などの茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。ハロワの基金訓練などを探しましょう",
+        "pickup":True 
+        
+    },
+    "接待":{
+        "tweet":settai,
+        "min_retweet":True
+    }    
+}
+
+run_bot(dat)
+
