@@ -12,8 +12,6 @@ def getApiInstance():
     bear_token
     access_token
     access_token_secret 
-
-
     # OAuth認証
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
@@ -24,10 +22,12 @@ def getApiInstance():
 
 import numpy as np
 
+import numpy as np
+
 
 def search(search_query):
 
-    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(30)    
+    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(1000)    
 
     #tweet=api.search(search_query,count=5000)
 
@@ -48,6 +48,7 @@ def run_bot(dat):
     while True:
         key=np.random.choice(list(dat.keys()),1)[0]
         tweets,texts=search(key)          
+        print(key)
         retweetWithComment(key,dat[key],tweets,
                            texts=texts)
         
@@ -103,7 +104,10 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
         except:
             continue
         cnt+=1
-        if "ntry" in d and cnt>=d["ntry"]:
+        if "ntry" not in d:
+            print("retun")
+            return
+        elif cnt>=d["ntry"]:
             return True
          
         time.sleep(int(ST*0.1))
@@ -130,7 +134,8 @@ dat={
     },
     "接待":{
         "tweet":settai,
-        "min_retweet":True
+        "min_retweet":True,
+        "ntry":1
     }    
 }
 
