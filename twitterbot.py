@@ -23,9 +23,10 @@ def getApiInstance():
     return api
 
 
+
 def search(search_query):
 
-    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(500)    
+    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(300)    
 
     #tweet=api.search(search_query,count=5000)
 
@@ -35,33 +36,41 @@ def search(search_query):
     df=[]
     for r in tweet:
         df.append(r)    
-        texts.append(r.user.description+"  "+r.full_text)
+        texts.append(r.user.name+r.user.description+"  "+r.full_text)
         #df.append({"name":r.user.name,"location":r.user.location,"description":r.user.description})        
 
-    print(len(texts))
+    #print(len(texts))
     return df,texts
 
 
 def run_bot(querys,tweets,n_try,min_retweet,pickup):
     while True:
         k=np.random.choice(len(querys),1)[0]
-        df,texts=search(querys[k])                   
-        retweetWithComment(querys[k],tweets[k],df,
-                           min_retweet=min_retweet[k],pickup=pickup[k])
+        print(k)
+        dfb,texts=search(querys[k])                
+        retweetWithComment(querys[k],tweets[k],dfb,
+                           min_retweet=min_retweet[k],pickup=pickup[k],texts=texts,ntry=n_try[k])
         
-        time.sleep(ST)
+        time.sleep(1200)
 
-def retweetWithComment(search_query,tweet,df,ntry=1,min_retweet=0,pickup=False,random=True):
+def retweetWithComment(search_query,tweet,tweets,ntry=1,min_retweet=0,pickup=False,random=True,texts=[]):
     cnt=0
-    for i in range(len(df)):
+    for i in range(len(tweets)):
         if random:
-            tw=np.random.choice(df,1)[0]
+            #tw=np.random.choice(tweets,1)[0]
+            k=np.random.choice(range(len(tweets)),1)[0]
+            tw=tweets[k]
         else:
+            #print(notrand)
             tw=df[i]
+        print("text",texts[k])
 
         if tw.retweet_count<=min_retweet:
             continue
+        #print(tw)
         u=tw.user
+        print(u.screen_name)
+        #print(u)
         urls="https://twitter.com/"+u.screen_name+"/status/"+str(tw.id)    
         
         if len(u.location)>0:
@@ -75,14 +84,14 @@ def retweetWithComment(search_query,tweet,df,ntry=1,min_retweet=0,pickup=False,r
             ptweet=search_query+"を利用中の"+locstr+u.name+" @"+u.screen_name[:20]+"さん "+tweet
         else:
             ptweet=tweet
-        print(tw.geo)
         ptweet=ptweet[:140]
         print(ptweet)
         print("strlength",len(ptweet))
         ptweet+=" "+urls        
-        
+
 
         try:
+            #print(1)
             api.update_status(ptweet)
         except:
             continue
@@ -90,15 +99,8 @@ def retweetWithComment(search_query,tweet,df,ntry=1,min_retweet=0,pickup=False,r
         if cnt>=ntry:
             return True
         
-        time.sleep(3000)
+        time.sleep(300)
     
-
-
-api=getApiInstance()
-screen_name="evidencefukusi"
-user=api.get_user(screen_name="evidencefukusi")
-
-
 
 ST=1000
 
