@@ -7,11 +7,11 @@ import numpy as np
 
 def getApiInstance():
     # 認証キーの設定
-    consumer_key = "IuNdbReQk4sxdjzSR0HZVPQNn"
-    consumer_secret = "vmf1b20uj7n3WYbDpP0M8q2Wi7s3zhOmDQ4drOMuCFlPqvNFU5"
-    bear_token = "AAAAAAAAAAAAAAAAAAAAADMSNAEAAAAA%2FFaIeFxZpFsBoWHklqISSrqkyHM%3D5x03MFuYuFsShUJ6IveoNahLGToQ1O8PbYTfpomSmOBFHyfvCo"
-    access_token="1288065283219832834-YE7ynNgeX6JK06NDsyngnZYxTHyJOO"
-    access_token_secret = "t5xuiQHZKY2HlzxExm4ZnFbZVgD051Xrd4cQlqmdO3lRS"
+    consumer_key 
+    consumer_secret
+    bear_token
+    access_token
+    access_token_secret 
 
 
     # OAuth認証
