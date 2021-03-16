@@ -21,13 +21,12 @@ def getApiInstance():
     return api
 
 import numpy as np
-
 import numpy as np
 
 
 def search(search_query):
 
-    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(1000)    
+    tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(Ntweet)    
 
     #tweet=api.search(search_query,count=5000)
 
@@ -99,11 +98,15 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
 
 
         try:
-            #print(1)
-            api.update_status(ptweet)
+            print(1)
+            #api.update_status(ptweet)
         except:
             continue
         cnt+=1
+        try:
+            print(cnt,d["ntry"])
+        except:
+            pass
         if "ntry" not in d:
             print("retun")
             return
@@ -113,8 +116,8 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
         time.sleep(int(ST*0.1))
     
 
-ST=600
-
+ST=300
+Ntweet=1000
     
 cm="それは税金の無駄ですね #A型事業所 #B型事業所 #就労移行支援 などの悪質事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。自宅で自習や内職をしましょう"
 settai="厚労省と福祉の業者団体でも絶対こういうのありますね、全国社会就労センター協議会,きょうされん,全国就労移行支援事業所連絡協議会全国就業センターとか　"+"https://fukusiprob.blogspot.com/2021/03/blog-post_8.html #接待 #福祉ビジネス"
