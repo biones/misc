@@ -2,26 +2,37 @@ import tweepy
 import json
 from requests_oauthlib import OAuth1Session
 import time
-import numpy as np
+import lib
+from notion.client import NotionClient
+import pandas as pd 
+
+%load_ext autoreload
+%autoreload 2
 
 
-def getApiInstance():
-    # 認証キーの設定
-    consumer_key 
-    consumer_secret
-    bear_token
-    access_token
-    access_token_secret 
-    # OAuth認証
-    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
+def notion_to_pandas():
+    # Obtain the `token_v2` value by inspecting your browser cookies on a logged-in (non-guest) session on Notion.so
+    client = NotionClient(token_v2)
+    url="https://www.notion.so/ede84dc00e8c42c1bcff78751313c82e?v=3ad69769c83148f5aaf02d1313387f1a"
 
-    # APIのインスタンスを生成
-    api = tweepy.API(auth, wait_on_rate_limit = True)
-    return api
+    # Replace this URL with the URL of the page you want to edit
+    #page = client.get_block("https://www.notion.so/myorg/Test-c0d20a71c0944985ae96e661ccc99821")
 
+    #print("The old title is:", page.title)
+    res=client.get_collection_view(url)
+    tdf=[]
+    col=res.collection
+    for r in col.get_rows():
+        t=df_n.columns[0]
+        try:
+            tdf.append(r.get_all_properties())
+        except:
+            pass
 
-import re
+    return pd.DataFrame(tdf)
+
+tdf=notion_to_pandas()
+
 import numpy as np
 import re
 import sqlite3
@@ -47,10 +58,39 @@ def search(search_query):
 
 def run_bot(dat):
     while True:
-        key=np.random.choice(list(dat.keys()),1)[0]
-        tweets,texts=search(key)          
-        #print(key)
-        retweetWithComment(key,dat[key],tweets,
+        d=tdf.iloc[np.random.choice(tdf.shape[0],1)[0]]
+        key=d.search_word
+        
+        #tweepy.Cursor(api.search_users, q ="社会福祉士", lang = 'ja').items(100) 
+        #if d.tweettype!="tweet":
+        #    continue
+        if d.tweettype=="tweet":
+            tweets=d["tweet"]
+            #print(np.random.choice(tweets,1)[0])
+            try:
+                api.update_status(np.random.choice(tweets,1)[0])
+            except:
+                pass
+            time.sleep(100)
+            continue            
+        elif d.tweettype=="search":            
+            try:
+                tweets,texts=search(key)
+            except:
+                time.sleep(ST)
+                continue
+        elif d.tweettype=="search_profile":
+            try:
+                tweets,texts=search(key)
+            except:
+                time.sleep(ST)
+                continue
+        else:
+            continue
+            
+        #print(tweets)
+        print(d)
+        retweetWithComment(d,tweets,
                            texts=texts)        
         time.sleep(ST)
 
@@ -64,23 +104,16 @@ def inserttweet(tw):
     cur.execute("insert into tweets(id,tweet,screen_name,name,description,search_query,created_at,location,retweet_count) values(?,?,?,?,?,?,?,?,?)",tw)
     
 
-def retweetWithComment(search_query,d,tweets,texts=[]):
+def retweetWithComment(d,tweets,texts=[]):
     global gtest,cur
+    
+    search_query=d.search_word
     cnt=0
-    #print(d)
     for i in range(len(tweets)):
-        #if "notrandom" in d:
-          #  print(notrand)
-           # tw=df[i]            
-            #k=i
-        #else:            
-            #tw=np.random.choice(tweets,1)[0]
         k=np.random.choice(range(len(tweets)),1)[0]
         tw=tweets[k]
             
-        print("text",texts[k])
-        print(i,gtest)
-        #m.min_retweet
+        print("minret",d.min_retweet,d["min_retweet"])
         try:
             if tw.retweet_count<=d["min_retweet"]:
                 continue
@@ -88,7 +121,6 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
             pass
 
         u=tw.user
-        print(u.screen_name)
         #print(u)
         urls="https://twitter.com/"+u.screen_name+"/status/"+str(tw.id)    
         
@@ -115,14 +147,22 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
         except:
             pass
             
-
+        if len(d.condition_profile)>0 and not(d.condition_profile in u.description):
+            continue            
+            
+        
+        tweet=d["tweet"]
+        '''
         try:
             tweet=np.random.choice(d["tweet"],1)[0]
         except:
             tweet=d["tweet"]
-            
+        '''
         if "pickup" in d:     
-            ptweet="#"+search_query+" を利用中の"+locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+tweet
+            if "士" in search_query:
+                ptweet=locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+tweet
+            else:
+                ptweet="#"+search_query+" を利用中の"+locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+tweet
         else:
             ptweet=tweet            
         
@@ -165,50 +205,17 @@ def retweetWithComment(search_query,d,tweets,texts=[]):
         
 gtest=False
 
-
+Ntweet=50
 if gtest:
-    ST=10
+    ST=1000
+    Ntweet=int(50)
 else:
-    ST=1200
+    ST=3600
+    Ntweet=int(500)
 
-Ntweet=int(ST)
-    
-cm="それは税金の無駄ですね #A型事業所 #B型事業所 #就労移行支援 などの悪質事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。自宅で自習や内職をしましょう"
-settai="厚労省と福祉の業者団体でも絶対こういうのありますね、全国社会就労センター協議会,きょうされん,全国就労移行支援事業所連絡協議会全国就業センターとか　"+"https://fukusiprob.blogspot.com/2021/03/blog-post_8.html #接待 #福祉ビジネス"
 
-stop='''【悪質な事業所は許せません】
-ここの事業所はどうなんだろう？アンケートご協力お願いします(匿名可) → http://bit.ly/3vIZ9HW 
-    STOP！税金の無駄・不正 #就労移行支援　#A型事業所　#放課後デイ　#福祉ビジネス'''
-
-dat={
-    "放課後デイサービス":{"tweet":["LINEで体温の報告を受けたり,アンパンマンを見せるだけで1.5万円も出る茶番事業ですね、税金の無駄です。利用を控えてくださいhttps://bit.ly/2OSOlWV　#放課後デイ #福祉ビジネス",
-                          stop,
-                         "税金ジャブジャブ障害福祉サービスの利用は控えましょう　https://bit.ly/2OSOlWV　放課後デイ #福祉ビジネス"],
-                 "pickup":True},
-    
-    "A型事業所":{
-        "tweet":[
-            "税金の無駄ですね掃除や家事の報告で１万円の報酬が出る茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になりアホになります。自習や内職をしましょう https://bit.ly/3tte9HZ",
-            "それは税金の無駄ですね掃除や家事の報告で１万円の報酬が出る茶番事業の利用は控えてください  https://bit.ly/3tte9HZ #B型事業所",
-            stop],
-        "pickup":True        
-    },
-    "就労移行支援":{
-        "tweet":
-            ["エクセルやUdemyの自習で1.5万円/日の報酬が出る茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります。ハロワの基金訓練などを探しましょうhttps://bit.ly/3bUqaQR",
-             "エクセルやUdemyの自習で1.5万円/日の報酬が出る茶番事業の利用は控えてくださいマトモな事に税金が使われなくなり障害者の迷惑になります　https://bit.ly/3bUqaQR ",
-             stop
-            ],
-        "pickup":True 
-        
-    },
-    "接待":{
-        "tweet":settai,
-        "min_retweet":True,
-        "ntry":1
-    }    
-}
-
+dat=tdf
+#discord https://discord.com/invite/HpNBWw7KYt
 dbname = 'fukusi.db'
 conn = sqlite3.connect(dbname)
 cur= conn.cursor()
