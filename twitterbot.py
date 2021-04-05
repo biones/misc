@@ -1,3 +1,7 @@
+import numpy as np
+import re
+import sqlite3
+
 import tweepy
 import json
 from requests_oauthlib import OAuth1Session
@@ -12,7 +16,7 @@ import pandas as pd
 
 def notion_to_pandas():
     # Obtain the `token_v2` value by inspecting your browser cookies on a logged-in (non-guest) session on Notion.so
-    client = NotionClient(token_v2)
+    client = NotionClient(token_v2="8f3ff0a1f8ee1758ce8d1ad19741cff2dac2197f520c382b76dd3652723f68e8d889d717ea8c0f134d0da8fc18497a6abfc071e1e93242e7a181768d100c419cd6704def7cf59c22f65944504943")
     url="https://www.notion.so/ede84dc00e8c42c1bcff78751313c82e?v=3ad69769c83148f5aaf02d1313387f1a"
 
     # Replace this URL with the URL of the page you want to edit
@@ -23,31 +27,40 @@ def notion_to_pandas():
     tdf=[]
     col=res.collection
     for r in col.get_rows():
-        t=df_n.columns[0]
         try:
             tdf.append(r.get_all_properties())
         except:
             pass
+    
+    tdf=pd.DataFrame(tdf)
+    #tdf=pd.DataFrame(col.columns[0])
+    
+    #tdf.columns=col
+    import re
+    for i,row in tdf.iterrows():        
+        text=re.sub("\[|\]", "",row.tweet)
+        tdf.tweet[i]=re.sub("\(.+?\)", "", text)
 
-    return pd.DataFrame(tdf)
+    return tdf
 
 tdf=notion_to_pandas()
+api=lib.getApiInstance()
 
-import numpy as np
-import re
-import sqlite3
+#res=client.get_collection_view(url)
+
+
 
 def search(search_query):
-    global Ntweet
+    global Ntweet,api
     print(Ntweet)
     tweet=tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(Ntweet)    
     #tweet=api.search(search_query,count=5000)
-
     texts=[]
     profile=[]
 
     df=[]
-    for r in tweet:
+    for r in tweet:        
+        #print(r)
         df.append(r)    
         texts.append(r.user.name+r.user.description+"  "+r.full_text)
         #df.append({"name":r.user.name,"location":r.user.location,"description":r.user.description})        
@@ -71,7 +84,7 @@ def run_bot(dat):
                 api.update_status(np.random.choice(tweets,1)[0])
             except:
                 pass
-            time.sleep(100)
+            time.sleep(600)
             continue            
         elif d.tweettype=="search":            
             try:
@@ -131,11 +144,6 @@ def retweetWithComment(d,tweets,texts=[]):
         else:
             locstr=""
         
-        #q="insert into users(screen_name,name,profile,location) values"+blacket([u.screen_name,u.name,u.description,u.location])
-        #print(q)
-        #dd=(u.screen_name,u.name,u.description,u.location)
-        #dd=[r.user.id,r.user.screen_name,r.user.name,search_query,r.user.description,r.full_text,r.user.location]
-        #print(dd)
         try:
             insertusertable(u)
             #cur.execute("insert into users(screen_name,name,description,location) values(?,?,?,?)",dd)            
@@ -158,24 +166,25 @@ def retweetWithComment(d,tweets,texts=[]):
         except:
             tweet=d["tweet"]
         '''
-        if "pickup" in d:     
+        print(d["pickup"],type(d["pickup"]),bool(["pickup"]))
+        if bool(d["pickup"]):     
+            nname=15
             if "士" in search_query:
-                ptweet=locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+tweet
+                ptweet=locstr+u.name[:15]+" @"+u.screen_name[:15]+"さん "+tweet
             else:
-                ptweet="#"+search_query+" を利用中の"+locstr+u.name[:20]+" @"+u.screen_name[:20]+"さん "+tweet
+                ptweet="#"+search_query+" を利用中の"+locstr+u.name[:nname]+" @"+u.screen_name[:nname]+"さん "+tweet
         else:
             ptweet=tweet            
-        
-        if re.match("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+",ptweet):            
-            ptweet=ptweet[:135]
-        else:
-            ptweet=ptweet[:140]
-        
+        m=re.search("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+",ptweet)
+        #l=len(m.group())
+        if m.start()+11>140:
+            ptweet=ptweet[:m.start()]
         print(ptweet)
         print("strlength",len(ptweet))
         
         ptweet+=" "+urls        
-
+        
+        
         try:
             if gtest:
                 print(1)
@@ -186,20 +195,22 @@ def retweetWithComment(d,tweets,texts=[]):
             cnt+=1
         except:
             continue
+            
+        return
+        '''
         try:
             s=d["ntry"]
         except:
             return
         
-        print("NNNNoret",cnt,gtest,i,d["ntry"])
+        print("NNNNoret",cnt,gtest,i,int(d["ntry"]))
         #input()
         
-        if cnt>=d["ntry"]:
+        if cnt>=int(d["ntry"]):
             return True
-        
-        
-         
+                
         time.sleep(int(ST*0.1))
+        '''
 
 
         
@@ -211,7 +222,7 @@ if gtest:
     Ntweet=int(50)
 else:
     ST=3600
-    Ntweet=int(500)
+    Ntweet=int(1000)
 
 
 dat=tdf
@@ -224,6 +235,5 @@ cur= conn.cursor()
 #     screen_name STRING unique)')
 
 run_bot(dat)
-
 conn.close()
             
