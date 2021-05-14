@@ -11,7 +11,12 @@ import tweepy
 
 def getApiInstance():
     # 認証キーの設定
-   
+    consumer_key = "1RlQ9ol80zOsFi7d9PJFOvAPI"
+    consumer_secret = "mx2fJyxx7TbNzcnwKT3dNNc67pdZra8ZzfL9qywEByuWUaL1U2"
+    bear_token = "AAAAAAAAAAAAAAAAAAAAAJbjNgEAAAAAjDrvnT%2FEvta5if%2Fg87b24cfp33Q%3DY8AWUgWTSlM94pZTZGEg7F0JIfy2RQoNeW8948yZDSkE8I4NbH"
+    access_token="1288065283219832834-h08A8HX5AuTYRCkVtwdM6ZeKqD8amr"
+    access_token_secret = "1JC5zKXWknl4BREjY4UomIArU0zegPt7pEkLNoxECRzgk"
+
 
     # OAuth認証
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
