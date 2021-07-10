@@ -1,7 +1,7 @@
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-import spacy
-import ginza
+#from sklearn.feature_extraction.text import CountVectorizer
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#import spacy
+#import ginza
 from functools import *
 import numpy as np 
 import re
@@ -127,7 +127,7 @@ def make_docmat(texts,POS_NOUN = ['PROPN', 'NOUN'],cvtype="count",addstopwords=[
     ret.word_freq=pd.DataFrame({"word":w,"freq":freq})
     return ret
 
-from sklearn.decomposition import LatentDirichletAllocation
+#from sklearn.decomposition import LatentDirichletAllocation
 
 def LDA(df_lda,n_components=20,Nword=20,filename="tmp_topic"):
 
@@ -152,3 +152,6 @@ def getdata(search_query,n=1000):
     for r in tweepy.Cursor(api.search, q =search_query,  include_entities = True, tweet_mode = 'extended', lang = 'ja').items(n):
         [r.id,r.full_text,r.user.screen_name,r.user.name,r.user.description,search_query,r.created_at,r.user.location,r.retweet_count]
     return 
+
+
+#test
